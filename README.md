@@ -3,7 +3,7 @@ A authorization example that shows accepting users that only have a valid ticket
 
 ## Notes
 
-This is intended for games where players host games are verify other players, it would need to be modified if it was a dedicated server verifying players.
+This is intended for games where players host games and verify other players, it would need to be modified if it was a dedicated server verifying players.
 
 This does not handle initializing steam fully, you should still stop the players from even trying to play if steam fails to initialize.
 
