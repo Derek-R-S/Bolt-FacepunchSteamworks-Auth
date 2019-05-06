@@ -22,7 +22,6 @@ public class SteamConnectToken : Bolt.IProtocolToken
     }
 
     public SteamConnectToken(){}
-	
     public SteamConnectToken(byte[] ticket, ulong steamid){
         this.ticket = ticket;
         this.steamid = steamid;

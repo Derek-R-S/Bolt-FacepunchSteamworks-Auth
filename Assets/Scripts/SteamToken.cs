@@ -1,12 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Steamworks;
 using UdpKit;
 using Bolt;
 
 public class SteamToken : Bolt.IProtocolToken
 {
-    public ulong steamid;
+    public SteamId steamid;
 
     public void Read(UdpPacket packet){
         steamid = packet.ReadULong();

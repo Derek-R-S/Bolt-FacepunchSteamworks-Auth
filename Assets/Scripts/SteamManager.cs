@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Facepunch.Steamworks;
+using Steamworks;
 using UdpKit;
 
 public class SteamManager : Bolt.GlobalEventListener
@@ -15,13 +15,12 @@ public class SteamManager : Bolt.GlobalEventListener
         if(instance == null){
             instance = this;
             DontDestroyOnLoad(gameObject);
-            new Client(appID);
-
-            if(Client.Instance == null || !Client.Instance.IsValid){
+            SteamClient.Init(appID);
+            if(!SteamClient.IsValid || !SteamClient.IsLoggedOn){
                 Debug.LogError("Failed starting steam.");
                 // Display a message or stop the user from playing.
             }else{
-                Client.Instance.RegisterCallback<SteamNative.ValidateAuthTicketResponse_t>(OnTicketResponse);
+                SteamUser.OnValidateAuthTicketResponse += OnTicketResponse;
             }
         }else{
             Destroy(gameObject);
@@ -29,24 +28,24 @@ public class SteamManager : Bolt.GlobalEventListener
     }
 
     void OnDestroy(){
-        Client.Instance.Dispose();
+        SteamClient.Shutdown();
     }
 
     void Update(){
-        if(Client.Instance != null && Client.Instance.IsValid)
-            Client.Instance.RunCallbacks();
+        if(SteamClient.IsValid)
+            SteamClient.RunCallbacks();
     }
 
-    void OnTicketResponse(SteamNative.ValidateAuthTicketResponse_t data){
-        if(pendingConnections.ContainsKey(data.SteamID)){
-            if(data.AuthSessionResponse == SteamNative.AuthSessionResponse.OK){
-                BoltNetwork.Accept(pendingConnections[data.SteamID], new SteamToken(data.SteamID));
-                pendingConnections.Remove(data.SteamID);
+    void OnTicketResponse(SteamId steamid, SteamId owner, AuthResponse response){
+        if(pendingConnections.ContainsKey(steamid)){
+            if(response == AuthResponse.OK){
+                BoltNetwork.Accept(pendingConnections[steamid], new SteamToken(steamid));
+                pendingConnections.Remove(steamid);
                 BoltLog.Info("Ticket valid, accepted connection.");
             }else{
-                BoltNetwork.Refuse(pendingConnections[data.SteamID]);
-                pendingConnections.Remove(data.SteamID);
-                BoltLog.Info("Refused user for reason: " + data.AuthSessionResponse);
+                BoltNetwork.Refuse(pendingConnections[steamid]);
+                pendingConnections.Remove(steamid);
+                BoltLog.Info("Refused user for reason: " + response);
             }
         }
     }
@@ -54,28 +53,26 @@ public class SteamManager : Bolt.GlobalEventListener
     public unsafe override void ConnectRequest(UdpEndPoint endpoint, Bolt.IProtocolToken token){
         SteamConnectToken connectToken = token as SteamConnectToken;
 
-        fixed(byte* ticket = connectToken.ticket){
-            SteamNative.BeginAuthSessionResult result = Client.Instance.native.user.BeginAuthSession((IntPtr)ticket, connectToken.ticket.Length, connectToken.steamid);
-            
-            if(result != SteamNative.BeginAuthSessionResult.OK){
-                BoltNetwork.Refuse(endpoint);
-                BoltLog.Info("Refused user with invalid ticket.");
-            }else{
-                if(pendingConnections.ContainsKey(connectToken.steamid))
-                    pendingConnections.Remove(connectToken.steamid);
+        BeginAuthResult result = SteamUser.BeginAuthSession(connectToken.ticket, connectToken.steamid);
+
+        if(result == BeginAuthResult.OK){
+            if(pendingConnections.ContainsKey(connectToken.steamid))
+                pendingConnections.Remove(connectToken.steamid);
                     
-                pendingConnections.Add(connectToken.steamid, endpoint);
-            }
+            pendingConnections.Add(connectToken.steamid, endpoint);
+        }else{
+            BoltNetwork.Refuse(endpoint);
+            BoltLog.Info("Refused user with invalid ticket.");
         }
     }
 
     public SteamConnectToken GetConnectToken(){
-        if(Client.Instance == null || !Client.Instance.IsValid){
+        if(!SteamClient.IsValid){
             Debug.LogError("Error, Steam is not initialized.");
             return null;
         }
 
-        SteamConnectToken token = new SteamConnectToken(Client.Instance.Auth.GetAuthSessionTicket().Data, Client.Instance.SteamId);
+        SteamConnectToken token = new SteamConnectToken(SteamUser.GetAuthSessionTicket().Data, SteamClient.SteamId.Value);
         return token;
     }
 }

@@ -1,17 +1,19 @@
-# Photon Bolt Free - Facepunch.Steamworks Ticket Authorization
+# Photon Bolt - Facepunch.Steamworks Ticket Auth
 A authorization example that shows accepting users that only have a valid ticket using Facepunch.Steamworks.
+
+## What
+
+Tickets verify users actually own the game, are who they say they are, and are not banned. Tickets are essential in almost every steam game.
+
+This is an example which handles accepting users and validating their tickets with Facepunch.Steamworks.
 
 ## Notes
 
-This is intended for games where players host games are verify other players, it would need to be modified if it was a dedicated server verifying players.
+This is intended for games where players host games and verify other players, it would need to be modified if it was a dedicated server verifying players.
 
-This does not handle initializing steam fully, you should still stop the players from even trying to play if steam fails to initialize.
+This does not handle failed steam inits, you should still stop the players from even trying to play if steam fails to initialize.
 
-This was made a while ago and uses Facepunch.Steamworks.Unity, which seems to no longer be a thing. This still works if you use the Facepunch.Steamworks from inside this repo. but wont work with the latest Facepunch.Steamworks yet. Planning on updating it soon.
-
-The only important files inside the repo. are inside the Assets/Scripts folder and the Assets/Facepunch.Steamworks folder, everything else is bolt files.
-
-Also, this requires unsafe code to be turned on in the unity player settings.
+The only important files inside the repo. are inside the Assets/Scripts, everything else is Bolt/Facepunch.Steamworks files.
 
 ## Use
 
